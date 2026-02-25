@@ -7,8 +7,11 @@ plugins {
 group 'com.pdd'
 version '1.0.0'
 
-sourceCompatibility = 17
-targetCompatibility = 17
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
 repositories {
     mavenCentral()
@@ -18,37 +21,65 @@ repositories {
 }
 
 dependencies {
-    // Spring Boot
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.2.0'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:3.2.0'
-    implementation 'org.springframework.boot:spring-boot-starter-validation:3.2.0'
+    // Spring Boot 4.0.3
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     
-    // Spring Cloud Alibaba
-    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery:2022.0.0.0'
-    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config:2022.0.0.0'
-    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-sentinel:2022.0.0.0'
-    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata:2022.0.0.0'
+    // Spring Cloud Alibaba 2023.0.1.0
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-sentinel'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata'
     
-    // Spring Cloud
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.1.0'
+    // Spring Cloud OpenFeign
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     
     // MyBatis-Plus
-    implementation 'com.baomidou:mybatis-plus-boot-starter:3.5.0'
+    implementation 'com.baomidou:mybatis-plus-boot-starter:3.5.5'
     
     // Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.2.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     
     // MySQL
-    implementation 'mysql:mysql-connector-java:8.0.30'
+    implementation 'com.mysql:mysql-connector-j:8.3.0'
     
     // Seata
-    implementation 'io.seata:seata-spring-boot-starter:1.6.0'
+    implementation 'io.seata:seata-spring-boot-starter:2.0.0'
+    
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.boot:spring-boot-dependencies:4.0.3'
+        mavenBom 'com.alibaba.cloud:spring-cloud-alibaba-dependencies:2023.0.1.0'
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2023.0.1.0'
+    }
 }
 
 springBoot {
     mainClass = 'com.pdd.order.OrderServiceApplication'
 }
 
-jar {
+bootJar {
     enabled = true
+}
+
+jar {
+    enabled = false
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
 }
