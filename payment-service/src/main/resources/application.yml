@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/pdd_payment?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 3
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+    seata:
+      tx-service-group: payment-service-group
+
+server:
+  port: 8084
+  servlet:
+    context-path: /payment
+
+# WeChat Pay configuration
+wechat:
+  pay:
+    app-id: wx1234567890123456
+    mch-id: 1234567890
+    mch-key: 12345678901234567890123456789012
+    notify-url: http://localhost:8084/payment/api/payments/notify/wechat
+
+# Alipay configuration
+alipay:
+  app-id: 2016000000000000
+  app-private-key: "私钥"
+  alipay-public-key: "支付宝公钥"
+  notify-url: http://localhost:8084/payment/api/payments/notify/alipay
+  return-url: http://localhost:8080/payment/success
+
+# Seata configuration
+seata:
+  service:
+    vgroup-mapping:
+      payment-service-group: default
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      server-addr: localhost:8848
+
+# Logging configuration
+logging:
+  level:
+    com.pdd.payment: info
+  config:
+    classpath: logback-spring.xml
