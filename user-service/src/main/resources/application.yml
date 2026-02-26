@@ -1,6 +1,15 @@
 spring:
   application:
     name: user-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/pdd_user?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
 server:
   port: 8081
