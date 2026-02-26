@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.3'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.pdd'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '21'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot核心依赖
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // Spring Cloud Alibaba
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery:2023.0.1.0'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config:2023.0.1.0'
+    implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-sentinel:2023.0.1.0'
+    
+    // 数据库
+    implementation 'com.baomidou:mybatis-plus-boot-starter:3.5.5'
+    implementation 'mysql:mysql-connector-java:8.3.0'
+    
+    // 搜索
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:8.10.0'
+    
+    // 工具
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'org.projectlombok:lombok:1.18.30'
+    implementation 'com.alibaba:fastjson:2.0.45'
+    
+    // 测试
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

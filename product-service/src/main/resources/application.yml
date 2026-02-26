@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: product-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/pdd_product?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  redis:
+    host: localhost
+    port: 6379
+    password:
+    database: 1
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yaml
+  elasticsearch:
+    uris: http://localhost:9200
+    username: elastic
+    password: changeme
+
+server:
+  port: 8082
+  servlet:
+    context-path: /product
+
+# Sentinel配置
+sentinel:
+  transport:
+    dashboard: localhost:8080
+  eager: true
+
+# 日志配置
+logging:
+  level:
+    com.pdd.product: info
+  config:
+    classpath: logback-spring.xml
+
+# 产品服务配置
+product:
+  image:
+    base-url: http://localhost:8082/product/images
+    upload-path: /data/images
