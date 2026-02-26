@@ -603,13 +603,15 @@ public interface UserClient {
 
 **输出定义**：
 
+**真实返回类型**：`Result<List<AddressDTO>>`
+
 **响应DTO类**：
 ```java
 // 统一响应包装类
 public class Result<T> {
     private Integer code;          // 响应码
     private String message;        // 响应消息
-    private T data;                // 数据对象（泛型，支持任意类型）
+    private T data;                // 数据对象（本接口T = List<AddressDTO>）
     private Long timestamp;        // 时间戳（毫秒）
 }
 
@@ -625,11 +627,6 @@ public class AddressDTO {
     private String detailAddress;  // 详细地址，VARCHAR(200)，非空
     private Integer isDefault;     // 是否默认，TINYINT，0-否，1-是
 }
-
-// 本接口返回类型：Result<List<AddressDTO>>
-// 即 data 字段是一个 AddressDTO 列表，包含用户的所有收货地址
-// 示例：Result<List<AddressDTO>> result = ...;
-//         List<AddressDTO> addresses = result.getData(); // 获取地址列表
 ```
 
 **响应结构说明**：
@@ -829,6 +826,7 @@ public interface UserClient {
     @GetMapping("/addresses/{id}")
     Result<AddressDTO> getAddressById(@PathVariable("id") Long id);
 }
+```
 
 ### 5.2 商品服务对外接口
 
@@ -1010,9 +1008,15 @@ public class Result<T> {
 | 项目 | 内容 |
 |:---|:---|
 | 接口名称 | 预扣库存 |
-| 接口路径 | POST /api/products/stock/pre-deduct |
+| 接口路径 | **POST /api/products/stock/pre-deduct** |
 | 调用方 | 订单服务 |
 | 接口描述 | 创建订单时预扣库存，防止超卖 |
+
+> **设计说明**：虽然预扣库存和确认扣减的请求DTO结构相同，但通过**不同的接口路径**区分：
+> - 预扣：`/stock/pre-deduct`（创建订单时调用）
+> - 实扣：`/stock/deduct`（支付成功后调用）
+> 
+> 服务端根据接口路径判断操作类型，执行不同的业务逻辑。
 
 **输入定义**：
 
@@ -1050,14 +1054,31 @@ public class StockDeductRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<Void>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;                // 数据对象（本接口T = Void，无数据）
+    private Long timestamp;        // 时间戳（毫秒）
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<Void>                                                   │
+│  (本接口返回类型：无数据，仅返回操作结果状态)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                       │
+│  message: "预扣库存成功"                                          │
+│  timestamp: 1708867200000                                        │
+│  data: null                                                      │
+│         ↑ 无返回数据，仅通过code和message表示操作结果             │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1065,7 +1086,7 @@ public class Result<T> {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 500 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | Void | 可为null | - | 无返回数据 |
+| data | **Void** | 固定为null | - | **无返回数据** |
 | timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例（成功）**：
@@ -1100,9 +1121,15 @@ public class Result<T> {
 | 项目 | 内容 |
 |:---|:---|
 | 接口名称 | 确认扣减库存 |
-| 接口路径 | POST /api/products/stock/deduct |
+| 接口路径 | **POST /api/products/stock/deduct** |
 | 调用方 | 订单服务 |
 | 接口描述 | 支付成功后确认扣减库存 |
+
+> **设计说明**：虽然预扣库存和确认扣减的请求DTO结构相同，但通过**不同的接口路径**区分：
+> - 预扣：`/stock/pre-deduct`（创建订单时调用）
+> - 实扣：`/stock/deduct`（支付成功后调用）
+> 
+> 服务端根据接口路径判断操作类型，执行不同的业务逻辑。
 
 **输入定义**：
 
@@ -1140,14 +1167,30 @@ public class StockDeductRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<Void>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;               // 数据对象（本接口T = Void，无数据）
+    private Long timestamp;        // 时间戳（毫秒）
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<Void>                                                   │
+│  (本接口返回类型：无数据，仅返回操作结果状态)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "确认扣减成功"                                        │
+│  timestamp: 1708867200000                                      │
+│  data: null                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1155,7 +1198,7 @@ public class Result<T> {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | Void | 可为null | - | 无返回数据 |
+| data | **Void** | 固定为null | - | **无返回数据** |
 | timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例**：
@@ -1214,14 +1257,30 @@ public class StockReleaseRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<Void>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;               // 数据对象（本接口T = Void，无数据）
+    private Long timestamp;        // 时间戳（毫秒）
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<Void>                                                   │
+│  (本接口返回类型：无数据，仅返回操作结果状态)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "释放库存成功"                                        │
+│  timestamp: 1708867200000                                      │
+│  data: null                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1229,7 +1288,7 @@ public class Result<T> {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | Void | 可为null | - | 无返回数据 |
+| data | **Void** | 固定为null | - | **无返回数据** |
 | timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例**：
@@ -1278,21 +1337,42 @@ List<@NotNull Long> productIds;    // 商品ID列表，非空，最多100个ID
 
 **输出定义**：
 
+**真实返回类型**：`Result<List<ProductSimpleDTO>>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = List<ProductSimpleDTO>）
+    private Long timestamp;        // 时间戳（毫秒）
 }
 
+// 简洁商品DTO（用于列表）
 public class ProductSimpleDTO {
-    private Long id;                // 商品ID，BIGINT，非空
-    private String name;            // 商品名称，VARCHAR(200)，非空
-    private BigDecimal price;       // 商品价格，DECIMAL(10,2)，非空
-    private Integer stock;          // 库存数量，INT，非空
+    private Long productId;        // 商品ID，BIGINT，非空
+    private String name;           // 商品名称，VARCHAR(200)，非空
+    private BigDecimal price;      // 商品价格，DECIMAL(10,2)，非空
+    private Integer stock;         // 库存数量，INT，非空
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<List<ProductSimpleDTO>>                                  │
+│  (本接口返回类型：商品列表)                                       │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: List<ProductSimpleDTO> ──────────────────────────────┐  │
+│         ┌─────────────────────────────────────────────────┐   │  │
+│         │ [0] {productId:1, name:"iPhone 15", price:...}  │   │  │
+│         │ [1] {productId:2, name:"iPhone 14", price:...}  │   │  │
+│         └─────────────────────────────────────────────────┘   │  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1300,8 +1380,8 @@ public class ProductSimpleDTO {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | List\<ProductSimpleDTO\> | 可为空列表 | - | 商品信息列表 |
-| data[].id | Long | 非空 | 正整数 | 商品唯一标识 |
+| data | **List\<ProductSimpleDTO\>** | 可为空列表 | - | **商品信息列表** |
+| data[].productId | Long | 非空 | 正整数 | 商品唯一标识 |
 | data[].name | String | 非空 | 1-200字符 | 商品名称 |
 | data[].price | BigDecimal | 非空 | >=0，最多2位小数 | 商品价格 |
 | data[].stock | Integer | 非空 | >=0 | 库存数量 |
@@ -1427,30 +1507,41 @@ public class OrderItemRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<OrderCreateDTO>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = OrderCreateDTO）
+    private Long timestamp;        // 时间戳（毫秒）
 }
 
+// 订单创建结果DTO
 public class OrderCreateDTO {
-    @Pattern(regexp = "^ORD\\d{17}$")
     private String orderNo;                     // 订单编号，VARCHAR(50)，非空，格式：ORD+17位数字
-    
-    @DecimalMin(value = "0.01")
     private BigDecimal totalAmount;             // 订单总金额，DECIMAL(10,2)，非空
-    
-    @DecimalMin(value = "0.01")
     private BigDecimal payAmount;               // 实付金额，DECIMAL(10,2)，非空
-    
     private Integer status;                     // 订单状态，TINYINT，非空，0-待支付
-    
-    @Pattern(regexp = "^PAY\\d{17}$")
     private String paymentNo;                   // 支付流水号，VARCHAR(50)，非空，格式：PAY+17位数字
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<OrderCreateDTO>                                          │
+│  (本接口返回类型：订单创建结果)                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: OrderCreateDTO ─────────────────────────────────────┐   │
+│         │ {orderNo:"ORD...", paymentNo:"PAY...", ...}     │   │
+│         └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1458,7 +1549,7 @@ public class OrderCreateDTO {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 500 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | OrderCreateDTO | 可为null | - | 订单创建结果 |
+| data | **OrderCreateDTO** | 可为null | - | **订单创建结果** |
 | data.orderNo | String | 非空 | ORD+17位数字 | 订单唯一编号 |
 | data.totalAmount | BigDecimal | 非空 | >=0.01，最多2位小数 | 订单总金额 |
 | data.payAmount | BigDecimal | 非空 | >=0.01，最多2位小数 | 实付金额 |
@@ -1501,22 +1592,26 @@ public class OrderCreateDTO {
 
 **输出定义**：
 
+**真实返回类型**：`Result<OrderDTO>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = OrderDTO）
+    private Long timestamp;        // 时间戳（毫秒）
 }
 
+// 订单详情DTO
 public class OrderDTO {
     private String orderNo;                     // 订单编号，VARCHAR(50)，非空
     private Long userId;                        // 用户ID，BIGINT，非空
     private BigDecimal totalAmount;             // 订单总金额，DECIMAL(10,2)，非空
     private BigDecimal payAmount;               // 实付金额，DECIMAL(10,2)，非空
-    private Integer status;                     // 订单状态，TINYINT，非空，0-待支付，1-已支付，2-已发货，3-已送达，4-已完成，5-已取消
-    private Integer paymentStatus;              // 支付状态，TINYINT，非空，0-待支付，1-已支付，2-支付失败
+    private Integer status;                     // 订单状态，TINYINT，非空
+    private Integer paymentStatus;              // 支付状态，TINYINT，非空
     private String receiverName;                // 收货人姓名，VARCHAR(50)，非空
     private String receiverPhone;               // 收货人电话，VARCHAR(20)，非空
     private String receiverAddress;             // 收货地址，VARCHAR(200)，非空
@@ -1525,6 +1620,7 @@ public class OrderDTO {
     private List<OrderItemDTO> items;           // 订单项列表，非空
 }
 
+// 订单项DTO
 public class OrderItemDTO {
     private Long productId;                     // 商品ID，BIGINT，非空
     private String productName;                 // 商品名称，VARCHAR(200)，非空
@@ -1535,12 +1631,27 @@ public class OrderItemDTO {
 }
 ```
 
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<OrderDTO>                                                │
+│  (本接口返回类型：单个订单对象)                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: OrderDTO ───────────────────────────────────────────┐   │
+│         │ {orderNo:"ORD...", items:[...], ...}              │   │
+│         └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 **响应字段详细说明**：
 | 字段路径 | Java类型 | 约束 | 取值范围 | 说明 |
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | OrderDTO | 可为null | - | 订单详情对象 |
+| data | **OrderDTO** | 可为null | - | **订单详情对象** |
 | data.orderNo | String | 非空 | ORD+17位数字 | 订单编号 |
 | data.userId | Long | 非空 | 正整数 | 用户ID |
 | data.totalAmount | BigDecimal | 非空 | >=0，最多2位小数 | 订单总金额 |
@@ -1638,14 +1749,30 @@ public class OrderStatusUpdateRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<Void>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = Void，无数据）
+    private Long timestamp;        // 时间戳（毫秒）
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<Void>                                                   │
+│  (本接口返回类型：无数据，仅返回操作结果状态)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: null                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1653,7 +1780,7 @@ public class Result<T> {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | Void | 可为null | - | 无返回数据 |
+| data | **Void** | 固定为null | - | **无返回数据** |
 | timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例**：
@@ -1724,14 +1851,30 @@ public class PaymentCallbackRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<Void>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = Void，无数据）
+    private Long timestamp;        // 时间戳（毫秒）
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<Void>                                                   │
+│  (本接口返回类型：无数据，仅返回操作结果状态)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: null                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1739,7 +1882,7 @@ public class Result<T> {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | Void | 可为null | - | 无返回数据 |
+| data | **Void** | 固定为null | - | **无返回数据** |
 | timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例**：
@@ -1803,14 +1946,30 @@ public class PaymentFailedRequest {
 
 **输出定义**：
 
+**真实返回类型**：`Result<Void>`
+
 **响应DTO类**：
 ```java
+// 统一响应包装类
 public class Result<T> {
-    private Integer code;
-    private String message;
-    private T data;
-    private Long timestamp;
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = Void，无数据）
+    private Long timestamp;        // 时间戳（毫秒）
 }
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<Void>                                                   │
+│  (本接口返回类型：无数据，仅返回操作结果状态)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: null                                                    │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 **响应字段详细说明**：
@@ -1818,7 +1977,7 @@ public class Result<T> {
 |:---|:---|:---|:---|:---|
 | code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
 | message | String | 非空 | 最大200字符 | 响应消息 |
-| data | Void | 可为null | - | 无返回数据 |
+| data | **Void** | 固定为null | - | **无返回数据** |
 | timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例**：
@@ -2013,16 +2172,54 @@ public interface OrderClient {
 }
 ```
 
-**响应参数**：
-| 字段名 | 类型 | 说明 |
-|:---|:---|:---|
-| code | Integer | 响应码，200-成功 |
-| message | String | 响应消息 |
-| data | Object | 支付信息 |
-| data.paymentNo | String | 支付流水号 |
-| data.orderNo | String | 订单编号 |
-| data.amount | BigDecimal | 支付金额 |
-| data.status | Integer | 支付状态：0-待支付 |
+**输出定义**：
+
+**真实返回类型**：`Result<PaymentCreateDTO>`
+
+**响应DTO类**：
+```java
+// 统一响应包装类
+public class Result<T> {
+    private Integer code;          // 响应码
+    private String message;        // 响应消息
+    private T data;              // 数据对象（本接口T = PaymentCreateDTO）
+    private Long timestamp;        // 时间戳（毫秒）
+}
+
+// 支付创建结果DTO
+public class PaymentCreateDTO {
+    private String paymentNo;       // 支付流水号，VARCHAR(50)，非空
+    private String orderNo;         // 订单编号，VARCHAR(50)，非空
+    private BigDecimal amount;     // 支付金额，DECIMAL(10,2)，非空
+    private Integer status;        // 支付状态，TINYINT，非空，0-待支付
+}
+```
+
+**响应结构说明**：
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Result<PaymentCreateDTO>                                        │
+│  (本接口返回类型：支付创建结果)                                  │
+├─────────────────────────────────────────────────────────────────┤
+│  code: 200                                                     │
+│  message: "success"                                            │
+│  timestamp: 1708867200000                                      │
+│  data: PaymentCreateDTO ─────────────────────────────────┐   │
+│         │ {paymentNo:"PAY...", orderNo:"ORD...", ...}     │   │
+│         └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**响应字段详细说明**：
+| 字段路径 | Java类型 | 约束 | 取值范围 | 说明 |
+|:---|:---|:---|:---|:---|
+| code | Integer | 非空 | 200, 400, 500 | 响应状态码 |
+| message | String | 非空 | 最大200字符 | 响应消息 |
+| data | **PaymentCreateDTO** | 可为null | - | **支付创建结果** |
+| data.paymentNo | String | 非空 | PAY+17位数字 | 支付流水号 |
+| data.orderNo | String | 非空 | ORD+17位数字 | 订单编号 |
+| data.amount | BigDecimal | 非空 | >=0，最多2位小数 | 支付金额 |
+| data.status | Integer | 非空 | 0 | 支付状态 |
 
 **响应示例**：
 ```json
@@ -2053,17 +2250,41 @@ public interface OrderClient {
 |:---|:---|:---|:---|:---|
 | paymentNo | String | Path | 是 | 支付流水号 |
 
-**响应参数**：
-| 字段名 | 类型 | 说明 |
-|:---|:---|:---|
-| code | Integer | 响应码，200-成功 |
-| message | String | 响应消息 |
-| data | Object | 支付信息 |
-| data.paymentNo | String | 支付流水号 |
-| data.orderNo | String | 订单编号 |
-| data.amount | BigDecimal | 支付金额 |
-| data.status | Integer | 支付状态：0-待支付，1-成功，2-失败，3-已关闭 |
-| data.payTime | DateTime | 支付时间 |
+**输出定义**：
+
+**真实返回类型**：`Result<PaymentDTO>`
+
+**响应DTO类**：
+```java
+// 统一响应包装类
+public class Result<T> {
+    private Integer code;
+    private String message;
+    private T data;
+    private Long timestamp;
+}
+
+// 支付信息DTO
+public class PaymentDTO {
+    private String paymentNo;       // 支付流水号
+    private String orderNo;         // 订单编号
+    private BigDecimal amount;     // 支付金额
+    private Integer status;        // 支付状态
+    private LocalDateTime payTime; // 支付时间
+}
+```
+
+**响应字段详细说明**：
+| 字段路径 | Java类型 | 约束 | 取值范围 | 说明 |
+|:---|:---|:---|:---|:---|
+| code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
+| message | String | 非空 | 最大200字符 | 响应消息 |
+| data | **PaymentDTO** | 可为null | - | **支付信息** |
+| data.paymentNo | String | 非空 | PAY+17位数字 | 支付流水号 |
+| data.orderNo | String | 非空 | ORD+17位数字 | 订单编号 |
+| data.amount | BigDecimal | 非空 | >=0，最多2位小数 | 支付金额 |
+| data.status | Integer | 非空 | 0, 1, 2, 3 | 支付状态 |
+| data.payTime | LocalDateTime | 可为null | ISO-8601格式 | 支付时间 |
 
 **响应示例**：
 ```json
@@ -2108,14 +2329,35 @@ public interface OrderClient {
 }
 ```
 
-**响应参数**：
-| 字段名 | 类型 | 说明 |
-|:---|:---|:---|
-| code | Integer | 响应码，200-成功 |
-| message | String | 响应消息 |
-| data | Object | 退款信息 |
-| data.refundNo | String | 退款流水号 |
-| data.status | Integer | 退款状态：0-处理中 |
+**输出定义**：
+
+**真实返回类型**：`Result<RefundDTO>`
+
+**响应DTO类**：
+```java
+// 统一响应包装类
+public class Result<T> {
+    private Integer code;
+    private String message;
+    private T data;
+    private Long timestamp;
+}
+
+// 退款结果DTO
+public class RefundDTO {
+    private String refundNo;      // 退款流水号
+    private Integer status;       // 退款状态
+}
+```
+
+**响应字段详细说明**：
+| 字段路径 | Java类型 | 约束 | 取值范围 | 说明 |
+|:---|:---|:---|:---|:---|
+| code | Integer | 非空 | 200, 400, 500 | 响应状态码 |
+| message | String | 非空 | 最大200字符 | 响应消息 |
+| data | **RefundDTO** | 可为null | - | **退款结果** |
+| data.refundNo | String | 非空 | REF+17位数字 | 退款流水号 |
+| data.status | Integer | 非空 | 0, 1, 2 | 退款状态 |
 
 **响应示例**：
 ```json
@@ -2144,12 +2386,28 @@ public interface OrderClient {
 |:---|:---|:---|:---|:---|
 | paymentNo | String | Path | 是 | 支付流水号 |
 
-**响应参数**：
-| 字段名 | 类型 | 说明 |
-|:---|:---|:---|
-| code | Integer | 响应码，200-成功 |
-| message | String | 响应消息 |
-| data | Null | 无数据 |
+**输出定义**：
+
+**真实返回类型**：`Result<Void>`
+
+**响应DTO类**：
+```java
+// 统一响应包装类
+public class Result<T> {
+    private Integer code;
+    private String message;
+    private T data;
+    private Long timestamp;
+}
+```
+
+**响应字段详细说明**：
+| 字段路径 | Java类型 | 约束 | 取值范围 | 说明 |
+|:---|:---|:---|:---|:---|
+| code | Integer | 非空 | 200, 400, 404 | 响应状态码 |
+| message | String | 非空 | 最大200字符 | 响应消息 |
+| data | **Void** | 固定为null | - | **无返回数据** |
+| timestamp | Long | 非空 | 13位时间戳 | 响应时间戳 |
 
 **响应示例**：
 ```json
