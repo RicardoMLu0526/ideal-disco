@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: user-service
+
+server:
+  port: 8081
+  servlet:
+    context-path: /user
+
+# 日志配置
+logging:
+  level:
+    com.pdd.user: info
