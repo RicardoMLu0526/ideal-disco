@@ -8,9 +8,12 @@ import com.pdd.order.feign.ProductServiceFeign;
 import com.pdd.order.feign.StockServiceFeign;
 import com.pdd.order.mapper.OrderMapper;
 import com.pdd.order.mapper.OrderItemMapper;
+import com.pdd.order.service.InventoryService;
 import com.pdd.order.service.OrderService;
+import com.pdd.order.util.IdGenerator;
 import com.pdd.order.util.OrderNoGenerator;
 import com.pdd.order.vo.OrderVO;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private StockServiceFeign stockServiceFeign;
+
+    @Autowired
+    private InventoryService inventoryService;
+
+    @Autowired
+    private IdGenerator idGenerator;
 
     @Override
     public OrderVO getOrderDetail(Long orderId) {
@@ -71,8 +80,10 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @GlobalTransactional(name = "create-order", rollbackFor = Exception.class)
     public Order createOrder(OrderCreateDTO createDTO) {
-        // 1. 生成订单号
+        // 1. 生成订单ID和订单号
+        Long orderId = idGenerator.nextId();
         String orderNo = OrderNoGenerator.generate();
 
         // 2. 计算订单金额
@@ -91,17 +102,11 @@ public class OrderServiceImpl implements OrderService {
             BigDecimal price = new BigDecimal(productData.get("price").toString());
             String productName = productData.get("name").toString();
             
-            // 检查库存
-            Integer stock = productServiceFeign.getProductStock(itemDTO.getProductId());
-            if (stock == null || stock < itemDTO.getQuantity()) {
+            // 预扣库存
+            boolean success = inventoryService.preDeductStock(itemDTO.getProductId(), itemDTO.getQuantity());
+            if (!success) {
                 throw new RuntimeException("商品库存不足");
             }
-            
-            // 扣减库存
-            Map<String, Object> stockRequest = new HashMap<>();
-            stockRequest.put("productId", itemDTO.getProductId());
-            stockRequest.put("quantity", itemDTO.getQuantity());
-            stockServiceFeign.decreaseStock(stockRequest);
             
             // 计算金额
             BigDecimal itemAmount = price.multiply(BigDecimal.valueOf(itemDTO.getQuantity()));
@@ -109,6 +114,8 @@ public class OrderServiceImpl implements OrderService {
 
             // 创建订单项
             OrderItem orderItem = new OrderItem();
+            orderItem.setId(idGenerator.nextId());
+            orderItem.setOrderId(orderId);
             orderItem.setProductId(itemDTO.getProductId());
             orderItem.setQuantity(itemDTO.getQuantity());
             orderItem.setPrice(price);
@@ -118,6 +125,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. 创建订单
         Order order = new Order();
+        order.setId(orderId);
         order.setOrderNo(orderNo);
         order.setUserId(createDTO.getUserId());
         order.setTotalAmount(totalAmount);
@@ -131,7 +139,6 @@ public class OrderServiceImpl implements OrderService {
 
         // 5. 批量插入订单项
         for (OrderItem orderItem : orderItems) {
-            orderItem.setOrderId(order.getId());
             orderItemMapper.insert(orderItem);
         }
 
@@ -151,6 +158,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @GlobalTransactional(name = "cancel-order", rollbackFor = Exception.class)
     public void cancelOrder(Long orderId) {
         // 1. 查询订单
         Order order = orderMapper.selectById(orderId);
@@ -171,16 +179,14 @@ public class OrderServiceImpl implements OrderService {
         // 4. 释放库存
         List<OrderItem> orderItems = orderItemMapper.selectByOrderId(orderId);
         for (OrderItem item : orderItems) {
-            // 调用库存服务释放库存
-            Map<String, Object> stockRequest = new HashMap<>();
-            stockRequest.put("productId", item.getProductId());
-            stockRequest.put("quantity", item.getQuantity());
-            stockServiceFeign.increaseStock(stockRequest);
+            // 释放库存
+            inventoryService.releaseStock(item.getProductId(), item.getQuantity());
             log.info("释放库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
         }
     }
 
     @Override
+    @GlobalTransactional(name = "pay-order", rollbackFor = Exception.class)
     public void payOrder(Long orderId, String paymentMethod) {
         // 1. 查询订单
         Order order = orderMapper.selectById(orderId);
@@ -208,9 +214,10 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentTime(LocalDateTime.now());
         orderMapper.updateById(order);
 
-        // 5. 确认扣减库存（在创建订单时已经扣减，这里可以做确认操作）
+        // 5. 确认扣减库存
         List<OrderItem> orderItems = orderItemMapper.selectByOrderId(orderId);
         for (OrderItem item : orderItems) {
+            inventoryService.confirmDeductStock(item.getProductId(), item.getQuantity());
             log.info("确认扣减库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
         }
     }
