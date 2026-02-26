@@ -2,8 +2,8 @@ plugins {
     id 'java'
     id 'idea'
     id 'eclipse'
-    id 'org.springframework.boot' version '3.2.0'
-    id 'io.spring.dependency-management' version '1.1.4'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.springframework.boot' version '4.0.3'
 }
 
 group 'com.pdd'
@@ -15,10 +15,23 @@ java {
     }
 }
 
+// 禁用root项目的bootJar任务
+if (project == rootProject) {
+    tasks.withType(org.springframework.boot.gradle.tasks.bundling.BootJar) {
+        enabled = false
+    }
+    
+    tasks.withType(org.gradle.api.tasks.bundling.Jar) {
+        enabled = false
+    }
+}
+
+// 所有项目的通用配置
 allprojects {
     apply plugin: 'java'
     apply plugin: 'idea'
     apply plugin: 'eclipse'
+    apply plugin: 'io.spring.dependency-management'
     
     repositories {
         mavenCentral()
@@ -27,58 +40,11 @@ allprojects {
         }
     }
     
-    dependencies {
-        // Spring Boot 4.0.3
-        implementation 'org.springframework.boot:spring-boot-starter-web:4.0.3'
-        implementation 'org.springframework.boot:spring-boot-starter-actuator:4.0.3'
-        implementation 'org.springframework.boot:spring-boot-starter-validation:4.0.3'
-        testImplementation 'org.springframework.boot:spring-boot-starter-test:4.0.3'
-        
-        // Spring Cloud Alibaba 2023.0.1.0 (compatible with Spring Boot 4.0.x)
-        implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-discovery:2023.0.1.0'
-        implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-nacos-config:2023.0.1.0'
-        implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-sentinel:2023.0.1.0'
-        
-        // Distributed Transaction
-        implementation 'com.alibaba.cloud:spring-cloud-starter-alibaba-seata:2023.0.1.0'
-        
-        // Database
-        implementation 'com.baomidou:mybatis-plus-boot-starter:3.5.5'
-        implementation 'com.mysql:mysql-connector-j:8.3.0'
-        implementation 'com.alibaba:druid-spring-boot-starter:1.2.21'
-        
-        // Redis
-        implementation 'org.springframework.boot:spring-boot-starter-data-redis:4.0.3'
-        
-        // Security
-        implementation 'org.springframework.boot:spring-boot-starter-security:4.0.3'
-        
-        // OpenAPI / Swagger
-        implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
-        
-        // Utils
-        implementation 'com.google.guava:guava:33.0.0-jre'
-        implementation 'org.apache.commons:commons-lang3:3.14.0'
-        implementation 'cn.hutool:hutool-all:5.8.25'
-        
-        // Lombok
-        compileOnly 'org.projectlombok:lombok:1.18.30'
-        annotationProcessor 'org.projectlombok:lombok:1.18.30'
-        
-        // MapStruct
-        implementation 'org.mapstruct:mapstruct:1.5.5.Final'
-        annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-        
-        // Logging (SLF4J 2.x for Spring Boot 4.0)
-        implementation 'org.slf4j:slf4j-api:2.0.11'
-        implementation 'ch.qos.logback:logback-classic:1.4.14'
-        
-        // Test
-        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
-        testImplementation 'org.mockito:mockito-core:5.8.0'
-        testImplementation 'org.testcontainers:testcontainers:1.19.3'
-        testImplementation 'org.testcontainers:mysql:1.19.3'
-        testImplementation 'org.testcontainers:junit-jupiter:1.19.3'
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:4.0.3'
+            mavenBom 'com.alibaba.cloud:spring-cloud-alibaba-dependencies:2023.0.1.0'
+        }
     }
     
     test {
@@ -91,16 +57,9 @@ allprojects {
     }
 }
 
+// 子项目配置
 subprojects {
     apply plugin: 'org.springframework.boot'
-    apply plugin: 'io.spring.dependency-management'
-    
-    dependencyManagement {
-        imports{
-            mavenBom 'org.springframework.boot:spring-boot-dependencies:4.0.3'
-            mavenBom 'com.alibaba.cloud:spring-cloud-alibaba-dependencies:2023.0.1.0'
-        }
-    }
     
     bootJar {
         enabled = true
