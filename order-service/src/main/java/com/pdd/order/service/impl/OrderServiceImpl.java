@@ -75,6 +75,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public OrderVO getOrderDetailByOrderNo(String orderNo) {
+        // 1. 从数据库根据订单号获取订单信息
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 获取订单项信息
+        List<OrderItem> orderItems = orderItemMapper.selectByOrderId(order.getId());
+
+        // 3. 构建返回结果
+        OrderVO orderVO = new OrderVO();
+        orderVO.setId(order.getId());
+        orderVO.setOrderNo(order.getOrderNo());
+        orderVO.setUserId(order.getUserId());
+        orderVO.setTotalAmount(order.getTotalAmount());
+        orderVO.setActualAmount(order.getActualAmount());
+        orderVO.setPaymentStatus(order.getPaymentStatus());
+        orderVO.setOrderStatus(order.getOrderStatus());
+        orderVO.setShippingAddress(order.getShippingAddress());
+        orderVO.setReceiverName(order.getReceiverName());
+        orderVO.setReceiverPhone(order.getReceiverPhone());
+        orderVO.setItems(orderItems);
+        return orderVO;
+    }
+
+    @Override
     public List<Order> getOrderList() {
         return orderMapper.selectList(null);
     }
@@ -186,6 +213,34 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @GlobalTransactional(name = "cancel-order-by-no", rollbackFor = Exception.class)
+    public void cancelOrderByOrderNo(String orderNo) {
+        // 1. 查询订单
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 检查订单状态
+        if (order.getOrderStatus() != 0) { // 不是待付款状态
+            throw new RuntimeException("订单状态不正确");
+        }
+
+        // 3. 更新订单状态
+        order.setOrderStatus(5); // 已取消
+        order.setCancelTime(LocalDateTime.now());
+        orderMapper.updateById(order);
+
+        // 4. 释放库存
+        List<OrderItem> orderItems = orderItemMapper.selectByOrderId(order.getId());
+        for (OrderItem item : orderItems) {
+            // 释放库存
+            inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+            log.info("释放库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
+        }
+    }
+
+    @Override
     @GlobalTransactional(name = "pay-order", rollbackFor = Exception.class)
     public void payOrder(Long orderId, String paymentMethod) {
         // 1. 查询订单
@@ -239,6 +294,138 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(4); // 已完成
         order.setConfirmTime(LocalDateTime.now());
         orderMapper.updateById(order);
+    }
+
+    @Override
+    public void confirmOrderByOrderNo(String orderNo) {
+        // 1. 查询订单
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 检查订单状态
+        if (order.getOrderStatus() != 2) { // 不是待收货状态
+            throw new RuntimeException("订单状态不正确");
+        }
+
+        // 3. 更新订单状态
+        order.setOrderStatus(4); // 已完成
+        order.setConfirmTime(LocalDateTime.now());
+        orderMapper.updateById(order);
+    }
+
+    @Override
+    public void updateOrderStatus(String orderNo, Integer status, Long paymentId, LocalDateTime payTime) {
+        // 1. 查询订单
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 更新订单状态
+        order.setOrderStatus(status);
+        order.setPaymentStatus(1); // 已支付
+        order.setPaymentId(paymentId);
+        order.setPaymentTime(payTime);
+        orderMapper.updateById(order);
+
+        // 3. 如果是已支付状态，确认扣减库存
+        if (status == 1) { // 已支付
+            List<OrderItem> orderItems = orderItemMapper.selectByOrderId(order.getId());
+            for (OrderItem item : orderItems) {
+                inventoryService.confirmDeductStock(item.getProductId(), item.getQuantity());
+                log.info("确认扣减库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
+            }
+        }
+    }
+
+    @Override
+    @GlobalTransactional(name = "handle-payment-success", rollbackFor = Exception.class)
+    public void handlePaymentSuccess(String orderNo, String paymentNo, BigDecimal amount, LocalDateTime payTime, Integer paymentMethod) {
+        // 1. 查询订单
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 检查订单状态
+        if (order.getOrderStatus() != 0) { // 不是待付款状态
+            throw new RuntimeException("订单状态不正确");
+        }
+
+        // 3. 更新订单状态
+        order.setOrderStatus(1); // 已支付
+        order.setPaymentStatus(1); // 已支付
+        order.setPaymentTime(payTime);
+        orderMapper.updateById(order);
+
+        // 4. 确认扣减库存
+        List<OrderItem> orderItems = orderItemMapper.selectByOrderId(order.getId());
+        for (OrderItem item : orderItems) {
+            inventoryService.confirmDeductStock(item.getProductId(), item.getQuantity());
+            log.info("确认扣减库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
+        }
+
+        log.info("支付成功处理完成: orderNo={}, paymentNo={}, amount={}", orderNo, paymentNo, amount);
+    }
+
+    @Override
+    @GlobalTransactional(name = "handle-payment-failed", rollbackFor = Exception.class)
+    public void handlePaymentFailed(String orderNo, String paymentNo, String failReason, LocalDateTime failTime) {
+        // 1. 查询订单
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 检查订单状态
+        if (order.getOrderStatus() != 0) { // 不是待付款状态
+            throw new RuntimeException("订单状态不正确");
+        }
+
+        // 3. 更新订单状态
+        order.setOrderStatus(5); // 已取消
+        order.setCancelTime(failTime);
+        orderMapper.updateById(order);
+
+        // 4. 释放库存
+        List<OrderItem> orderItems = orderItemMapper.selectByOrderId(order.getId());
+        for (OrderItem item : orderItems) {
+            inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+            log.info("释放库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
+        }
+
+        log.info("支付失败处理完成: orderNo={}, paymentNo={}, reason={}", orderNo, paymentNo, failReason);
+    }
+
+    @Override
+    @GlobalTransactional(name = "handle-payment-timeout", rollbackFor = Exception.class)
+    public void handlePaymentTimeout(String orderNo, String paymentNo, Integer timeoutMinutes, LocalDateTime timeoutTime) {
+        // 1. 查询订单
+        Order order = orderMapper.selectByOrderNo(orderNo);
+        if (order == null) {
+            throw new RuntimeException("订单不存在");
+        }
+
+        // 2. 检查订单状态
+        if (order.getOrderStatus() != 0) { // 不是待付款状态
+            throw new RuntimeException("订单状态不正确");
+        }
+
+        // 3. 更新订单状态
+        order.setOrderStatus(5); // 已取消
+        order.setCancelTime(timeoutTime);
+        orderMapper.updateById(order);
+
+        // 4. 释放库存
+        List<OrderItem> orderItems = orderItemMapper.selectByOrderId(order.getId());
+        for (OrderItem item : orderItems) {
+            inventoryService.releaseStock(item.getProductId(), item.getQuantity());
+            log.info("释放库存: productId={}, quantity={}", item.getProductId(), item.getQuantity());
+        }
+
+        log.info("支付超时处理完成: orderNo={}, paymentNo={}, timeoutMinutes={}", orderNo, paymentNo, timeoutMinutes);
     }
 
     @Override

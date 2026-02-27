@@ -21,15 +21,15 @@ public class OrderItemController {
     @GetMapping("/{orderId}/items")
     public Map<String, Object> getOrderItems(@PathVariable Long orderId) {
         List<OrderItem> orderItems = orderItemMapper.selectByOrderId(orderId);
-        return Map.of("code", 200, "message", "success", "data", orderItems);
+        return Map.of("code", 200, "message", "success", "data", orderItems, "timestamp", System.currentTimeMillis());
     }
 
     @GetMapping("/{orderId}/items/{id}")
     public Map<String, Object> getOrderItemDetail(@PathVariable Long orderId, @PathVariable Long id) {
         OrderItem orderItem = orderItemMapper.selectById(id);
         if (orderItem == null || !orderItem.getOrderId().equals(orderId)) {
-            return Map.of("code", 404, "message", "订单项不存在");
+            return Map.of("code", 404, "message", "订单项不存在", "timestamp", System.currentTimeMillis());
         }
-        return Map.of("code", 200, "message", "success", "data", orderItem);
+        return Map.of("code", 200, "message", "success", "data", orderItem, "timestamp", System.currentTimeMillis());
     }
 }

@@ -2,7 +2,6 @@ package com.pdd.user.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -29,7 +28,7 @@ public class Address {
     /**
      * 用户ID
      */
-    @NotNull(message = "用户ID不能为空")
+    @NotBlank(message = "用户ID不能为空")
     @Column(name = "user_id", nullable = false)
     private Long userId;
 

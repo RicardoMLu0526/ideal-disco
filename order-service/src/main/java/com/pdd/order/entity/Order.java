@@ -27,6 +27,7 @@ public class Order {
     private LocalDateTime confirmTime;
     private LocalDateTime cancelTime;
     private String trackingNumber;
+    private Long paymentId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

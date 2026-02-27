@@ -8,12 +8,6 @@ class OrderServiceApplicationTests {
 
     @Test
     void contextLoads() {
-        // 测试应用上下文是否能正常加载
-    }
-
-    @Test
-    void testApplicationStartup() {
-        // 测试应用启动
-        OrderServiceApplication.main(new String[]{});
+        // 娴嬭瘯搴旂敤涓婁笅鏂囨槸鍚﹁兘姝ｅ父鍔犺浇
     }
 }

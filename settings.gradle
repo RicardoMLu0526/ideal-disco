@@ -2,3 +2,4 @@ rootProject.name = 'pdd-microservices'
 
 include 'order-service'
 include 'user-service'
+include 'product-service'

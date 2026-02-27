@@ -8,6 +8,8 @@ import com.pdd.order.feign.ProductServiceFeign;
 import com.pdd.order.feign.StockServiceFeign;
 import com.pdd.order.mapper.OrderMapper;
 import com.pdd.order.mapper.OrderItemMapper;
+import com.pdd.order.service.InventoryService;
+import com.pdd.order.util.IdGenerator;
 import com.pdd.order.vo.OrderVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,12 @@ class OrderServiceImplTest {
     @Mock
     private StockServiceFeign stockServiceFeign;
 
+    @Mock
+    private InventoryService inventoryService;
+
+    @Mock
+    private IdGenerator idGenerator;
+
     @InjectMocks
     private OrderServiceImpl orderService;
 
@@ -60,6 +68,9 @@ class OrderServiceImplTest {
         itemDTO.setQuantity(2);
         createDTO.setItems(List.of(itemDTO));
 
+        // 模拟ID生成器
+        when(idGenerator.nextId()).thenReturn(1L);
+
         // 模拟商品服务返回
         Map<String, Object> productInfo = Map.of(
                 "code", 200,
@@ -70,9 +81,9 @@ class OrderServiceImplTest {
                 )
         );
         when(productServiceFeign.getProductById(1L)).thenReturn(productInfo);
-        when(productServiceFeign.getProductStock(1L)).thenReturn(10);
 
         // 模拟库存服务
+        when(inventoryService.preDeductStock(1L, 2)).thenReturn(true);
         when(stockServiceFeign.decreaseStock(anyMap())).thenReturn(Map.of("code", 200));
 
         // 模拟订单插入
@@ -155,7 +166,8 @@ class OrderServiceImplTest {
         // 模拟 Mapper 方法
         when(orderMapper.selectById(orderId)).thenReturn(order);
         when(orderItemMapper.selectByOrderId(orderId)).thenReturn(List.of(orderItem));
-        when(stockServiceFeign.increaseStock(anyMap())).thenReturn(Map.of("code", 200));
+        // 模拟库存服务
+        doNothing().when(inventoryService).releaseStock(1L, 2);
 
         // 执行测试
         orderService.cancelOrder(orderId);
@@ -180,6 +192,9 @@ class OrderServiceImplTest {
 
         // 模拟 Mapper 方法
         when(orderMapper.selectById(orderId)).thenReturn(order);
+        when(orderItemMapper.selectByOrderId(orderId)).thenReturn(List.of());
+        // 模拟库存服务
+        doNothing().when(inventoryService).confirmDeductStock(anyLong(), anyInt());
 
         // 执行测试
         orderService.payOrder(orderId, paymentMethod);

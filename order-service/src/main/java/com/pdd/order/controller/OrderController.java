@@ -7,6 +7,8 @@ import com.pdd.order.vo.OrderVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,56 +22,67 @@ public class OrderController {
     @GetMapping
     public Map<String, Object> getOrderList() {
         List<Order> orders = orderService.getOrderList();
-        return Map.of("code", 200, "message", "success", "data", orders);
+        return Map.of("code", 200, "message", "success", "data", orders, "timestamp", System.currentTimeMillis());
     }
 
-    @GetMapping("/{id}")
-    public Map<String, Object> getOrderDetail(@PathVariable Long id) {
-        OrderVO orderVO = orderService.getOrderDetail(id);
-        return Map.of("code", 200, "message", "success", "data", orderVO);
+    @GetMapping("/{orderNo}")
+    public Map<String, Object> getOrderDetail(@PathVariable String orderNo) {
+        OrderVO orderVO = orderService.getOrderDetailByOrderNo(orderNo);
+        return Map.of("code", 200, "message", "success", "data", orderVO, "timestamp", System.currentTimeMillis());
     }
 
     @PostMapping
     public Map<String, Object> createOrder(@RequestBody OrderCreateDTO createDTO) {
         Order order = orderService.createOrder(createDTO);
-        return Map.of("code", 200, "message", "success", "data", Map.of("orderId", order.getId(), "orderNo", order.getOrderNo()));
+        return Map.of("code", 200, "message", "success", "data", Map.of("orderNo", order.getOrderNo(), "totalAmount", order.getTotalAmount(), "actualAmount", order.getActualAmount(), "status", order.getOrderStatus()), "timestamp", System.currentTimeMillis());
     }
 
-    @PutMapping("/{id}")
-    public Map<String, Object> updateOrder(@PathVariable Long id, @RequestBody Order order) {
-        Order updatedOrder = orderService.updateOrder(id, order);
-        return Map.of("code", 200, "message", "success", "data", updatedOrder);
+    @PostMapping("/{orderNo}/cancel")
+    public Map<String, Object> cancelOrder(@PathVariable String orderNo) {
+        orderService.cancelOrderByOrderNo(orderNo);
+        return Map.of("code", 200, "message", "success", "timestamp", System.currentTimeMillis());
     }
 
-    @DeleteMapping("/{id}")
-    public Map<String, Object> deleteOrder(@PathVariable Long id) {
-        orderService.deleteOrder(id);
-        return Map.of("code", 200, "message", "success");
+    @PutMapping("/{orderNo}/status")
+    public Map<String, Object> updateOrderStatus(@PathVariable String orderNo, @RequestBody Map<String, Object> request) {
+        Integer status = (Integer) request.get("status");
+        Long paymentId = (Long) request.get("paymentId");
+        String payTimeStr = (String) request.get("payTime");
+        orderService.updateOrderStatus(orderNo, status, paymentId, LocalDateTime.parse(payTimeStr));
+        return Map.of("code", 200, "message", "success", "timestamp", System.currentTimeMillis());
     }
 
-    @PostMapping("/{id}/cancel")
-    public Map<String, Object> cancelOrder(@PathVariable Long id) {
-        orderService.cancelOrder(id);
-        return Map.of("code", 200, "message", "success");
+    @PostMapping("/{orderNo}/paid")
+    public Map<String, Object> orderPaidCallback(@PathVariable String orderNo, @RequestBody Map<String, Object> request) {
+        String paymentNo = (String) request.get("paymentNo");
+        BigDecimal amount = new BigDecimal(request.get("amount").toString());
+        String payTimeStr = (String) request.get("payTime");
+        Integer paymentMethod = (Integer) request.get("paymentMethod");
+        orderService.handlePaymentSuccess(orderNo, paymentNo, amount, LocalDateTime.parse(payTimeStr), paymentMethod);
+        return Map.of("code", 200, "message", "success", "timestamp", System.currentTimeMillis());
     }
 
-    @PostMapping("/{id}/pay")
-    public Map<String, Object> payOrder(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String paymentMethod = request.get("paymentMethod");
-        orderService.payOrder(id, paymentMethod);
-        return Map.of("code", 200, "message", "success", "data", Map.of("paymentUrl", "https://payment.example.com/pay?orderId=" + id));
+    @PostMapping("/{orderNo}/payment-failed")
+    public Map<String, Object> orderPaymentFailedCallback(@PathVariable String orderNo, @RequestBody Map<String, Object> request) {
+        String paymentNo = (String) request.get("paymentNo");
+        String failReason = (String) request.get("failReason");
+        String failTimeStr = (String) request.get("failTime");
+        orderService.handlePaymentFailed(orderNo, paymentNo, failReason, LocalDateTime.parse(failTimeStr));
+        return Map.of("code", 200, "message", "success", "timestamp", System.currentTimeMillis());
     }
 
-    @PostMapping("/{id}/confirm")
-    public Map<String, Object> confirmOrder(@PathVariable Long id) {
-        orderService.confirmOrder(id);
-        return Map.of("code", 200, "message", "success");
+    @PostMapping("/{orderNo}/payment-timeout")
+    public Map<String, Object> orderPaymentTimeoutCallback(@PathVariable String orderNo, @RequestBody Map<String, Object> request) {
+        String paymentNo = (String) request.get("paymentNo");
+        Integer timeoutMinutes = (Integer) request.get("timeoutMinutes");
+        String timeoutTimeStr = (String) request.get("timeoutTime");
+        orderService.handlePaymentTimeout(orderNo, paymentNo, timeoutMinutes, LocalDateTime.parse(timeoutTimeStr));
+        return Map.of("code", 200, "message", "success", "timestamp", System.currentTimeMillis());
     }
 
-    @PostMapping("/{id}/ship")
-    public Map<String, Object> shipOrder(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String trackingNumber = request.get("trackingNumber");
-        orderService.shipOrder(id, trackingNumber);
-        return Map.of("code", 200, "message", "success");
+    @PostMapping("/{orderNo}/receive")
+    public Map<String, Object> confirmOrder(@PathVariable String orderNo) {
+        orderService.confirmOrderByOrderNo(orderNo);
+        return Map.of("code", 200, "message", "success", "timestamp", System.currentTimeMillis());
     }
 }

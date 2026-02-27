@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class OrderCreateDTO {
     private Long userId;
-    private List<OrderItemDTO> items;
+    private List<OrderItemDTO> items = new java.util.ArrayList<>();
     private Long addressId;
     private String receiverName;
     private String receiverPhone;
