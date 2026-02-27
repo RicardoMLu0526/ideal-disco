@@ -164,7 +164,7 @@ class AddressControllerTest {
         address2.setDetail("中心城1号");
         AddressDTO created2 = addressService.createAddress(address2);
 
-        mockMvc.perform(put("/api/users/addresses/" + userId + "/" + created2.getId() + "/default"))
+        mockMvc.perform(put("/api/users/" + userId + "/addresses/" + created2.getId() + "/default"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("默认地址设置成功"));

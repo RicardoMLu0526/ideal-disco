@@ -88,16 +88,16 @@ public class UserController {
         return Result.success("用户创建成功", userVO);
     }
 
-    @PutMapping("/{id}")
-    public Result<UserVO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
-        UserDTO result = userService.updateUser(id, userDTO);
+    @PutMapping("/{userId}")
+    public Result<UserVO> updateUser(@PathVariable Long userId, @RequestBody UserDTO userDTO) {
+        UserDTO result = userService.updateUser(userId, userDTO);
         UserVO userVO = userService.convertToVO(result);
         return Result.success("用户更新成功", userVO);
     }
 
-    @DeleteMapping("/{id}")
-    public Result<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    @DeleteMapping("/{userId}")
+    public Result<Void> deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
         return Result.success("用户删除成功");
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/users")
 public class AuthController {
 
     @Autowired
@@ -40,7 +40,7 @@ public class AuthController {
         return Result.success("Token刷新成功", newToken);
     }
 
-    @GetMapping("/verify")
+    @PostMapping("/validate")
     public Result<Map<String, Object>> verifyToken(@RequestHeader("Authorization") String token) {
         boolean isValid = authService.validateToken(token);
         if (isValid) {

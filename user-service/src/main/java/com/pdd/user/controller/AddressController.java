@@ -11,13 +11,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/users/addresses")
+@RequestMapping("/api/users")
 public class AddressController {
 
     @Autowired
     private AddressService addressService;
 
-    @GetMapping("/{addressId}")
+    @GetMapping("/addresses/{addressId}")
     public Result<AddressVO> getAddressById(@PathVariable Long addressId) {
         AddressDTO addressDTO = addressService.getAddressById(addressId);
         if (addressDTO == null) {
@@ -27,27 +27,27 @@ public class AddressController {
         return Result.success(addressVO);
     }
 
-    @PostMapping
+    @PostMapping("/addresses")
     public Result<AddressVO> createAddress(@RequestBody AddressDTO addressDTO) {
         AddressDTO result = addressService.createAddress(addressDTO);
         AddressVO addressVO = addressService.convertToVO(result);
         return Result.success("地址创建成功", addressVO);
     }
 
-    @PutMapping("/{addressId}")
+    @PutMapping("/addresses/{addressId}")
     public Result<AddressVO> updateAddress(@PathVariable Long addressId, @RequestBody AddressDTO addressDTO) {
         AddressDTO result = addressService.updateAddress(addressId, addressDTO);
         AddressVO addressVO = addressService.convertToVO(result);
         return Result.success("地址更新成功", addressVO);
     }
 
-    @DeleteMapping("/{addressId}")
+    @DeleteMapping("/addresses/{addressId}")
     public Result<Void> deleteAddress(@PathVariable Long addressId) {
         addressService.deleteAddress(addressId);
         return Result.success("地址删除成功");
     }
 
-    @PutMapping("/{userId}/{addressId}/default")
+    @PutMapping("/{userId}/addresses/{addressId}/default")
     public Result<Void> setDefaultAddress(@PathVariable Long userId, @PathVariable Long addressId) {
         addressService.setDefaultAddress(userId, addressId);
         return Result.success("默认地址设置成功");
