@@ -1,0 +1,104 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{xeCJK}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{fontspec}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{enumitem}
+\usepackage{setspace}
+
+% 页面设置 - 紧凑但舒适的页边距
+\geometry{left=1.5cm, right=1.5cm, top=1.2cm, bottom=1.2cm}
+\setmainfont{DejaVu Serif}
+\setCJKmainfont{AR PL UMing CN}
+\setCJKsansfont{AR PL UMing CN}
+
+% 紧凑的行间距
+\setstretch{0.9}
+
+% 紧凑的列表间距
+\setlist{leftmargin=1.3em, itemsep=0.12em, parsep=0pt}
+
+% 标题格式 - 紧凑的间距
+\titleformat{\section}{\normalsize\bfseries\centering}{}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{1.2ex}{0.6ex}
+
+% 紧凑的表格间距
+\renewcommand{\arraystretch}{0.95}
+
+\begin{document}
+
+% 个人信息（带照片位置）
+\noindent
+\begin{minipage}[t]{0.77\textwidth}
+    \vspace{0pt}
+    {\Large\textbf{刘文珍}} \quad {\small 19岁} \\[0.2em]
+    {\small 昆明理工大学 \quad 计算机科学与技术（大二） \quad 绩点排名：专业前10\%} \\[0.2em]
+    {\small 电话：19170446979 \quad 邮箱：\href{mailto:1417623595@qq.com}{1417623595@qq.com}} \\[0.2em]
+    {\small GitHub：\href{https://github.com/RicardoMLu0526/ideal-disco}{RicardoMLu0526/ideal-disco}}
+\end{minipage}%
+\begin{minipage}[t]{0.23\textwidth}
+    \vspace{0pt}
+    \hfill
+    \fbox{\parbox{2.2cm}{\centering\vspace{0.9cm}{\small 照片}\vspace{0.9cm}}}
+\end{minipage}
+\vspace{0.6em}
+
+% 求职意向
+\section{求职意向}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+    \textbf{目标岗位} & Java后端开发工程师（暑期实习） \\
+    \textbf{实习时间} & 2026年暑假（大二升大三暑期实习）
+\end{tabularx}
+\vspace{0.2em}
+
+% 教育背景
+\section{教育背景}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+    \textbf{昆明理工大学} & 计算机科学与技术（大二） \quad 绩点排名：专业前10\% \quad 2024.09-2028.06 \\[0.3em]
+    \textbf{主修课程} & 数据结构与算法、Java程序设计、数据库系统、计算机网络、计算机组成原理、操作系统、编译原理
+\end{tabularx}
+\vspace{0.2em}
+
+% 技术栈
+\section{技术栈}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+    \textbf{编程语言} & Java（熟练）、Python（熟悉）、C语言（熟悉） \\[0.2em]
+    \textbf{后端框架} & Spring Boot、Spring Cloud Alibaba、MyBatis-Plus、Spring Security \\[0.2em]
+    \textbf{微服务组件} & Nacos（服务注册/配置中心）、Seata（分布式事务）、Sentinel（限流降级）、Gateway（网关） \\[0.2em]
+    \textbf{数据库/缓存} & MySQL（SQL优化、索引设计）、Redis（缓存、分布式锁） \\[0.2em]
+    \textbf{开发工具} & IntelliJ IDEA、Git、Gradle、Maven、Postman、Linux基础命令
+\end{tabularx}
+\vspace{0.2em}
+
+% 项目经历
+\section{项目经历}
+\textbf{微服务电商系统} \hfill \href{https://github.com/RicardoMLu0526/ideal-disco}{GitHub: ideal-disco} \quad 2025.01-2026.03
+\begin{itemize}
+    \item \textbf{项目背景}：基于Spring Cloud Alibaba构建完整的微服务电商系统，包含订单、商品、用户、支付四大核心服务，实现高并发场景下的分布式事务处理
+    \item \textbf{订单服务（核心模块）}：独立负责订单服务的设计与开发，实现订单创建、支付回调、取消退款、状态机流转等核心功能；集成Seata AT模式处理分布式事务，保证订单与库存数据一致性
+    \item \textbf{接口设计与实现}：按照RESTful规范设计API接口，使用DTO/VO分层传输数据，实现订单号生成策略（雪花算法）、幂等性校验、参数校验等
+    \item \textbf{数据库设计}：设计订单表、订单项表，优化索引提升查询性能；使用MyBatis-Plus简化CRUD操作，编写复杂查询的XML映射文件
+    \item \textbf{服务治理}：使用Nacos实现服务注册发现与动态配置；集成Sentinel实现接口限流、熔断降级，提升系统稳定性
+    \item \textbf{测试与文档}：编写JUnit单元测试和Spring Boot集成测试，覆盖核心业务流程；编写接口文档和测试报告，提交代码50+次，代码规范遵循阿里巴巴Java开发手册
+\end{itemize}
+\vspace{0.2em}
+
+% 技能总结
+\section{技能总结}
+\begin{itemize}
+    \item \textbf{Java基础扎实}：熟悉集合框架源码、多线程并发编程、JVM内存模型与垃圾回收机制，具备良好的面向对象设计能力
+    \item \textbf{微服务开发经验}：熟练使用Spring Boot/Spring Cloud开发微服务，了解常用设计模式，有实际的分布式事务处理经验
+    \item \textbf{数据库能力}：熟悉MySQL索引优化、事务隔离级别、锁机制；掌握Redis数据类型与应用场景，了解缓存穿透/击穿/雪崩解决方案
+    \item \textbf{工程化能力}：熟悉Git工作流，能够编写单元测试保证代码质量；了解Maven/Gradle构建工具，具备Linux服务器部署基础
+\end{itemize}
+\vspace{0.2em}
+
+% 自我评价
+\section{自我评价}
+热爱后端开发，对技术有浓厚兴趣，具备良好的学习能力和问题解决能力。在校期间积极参与项目实践，通过GitHub持续输出代码，注重代码质量和工程规范。希望能够在实习中进一步提升技术能力，为团队创造价值。
+
+\end{document}
