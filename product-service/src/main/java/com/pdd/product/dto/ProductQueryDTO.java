@@ -4,8 +4,8 @@ import lombok.Data;
 
 @Data
 public class ProductQueryDTO {
-    private String keyword;
     private Long categoryId;
+    private String keyword;
     private Integer page;
     private Integer size;
 }

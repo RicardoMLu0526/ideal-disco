@@ -1,7 +1,8 @@
 package com.pdd.product.service;
 
 import com.pdd.product.dto.CategoryDTO;
-import com.pdd.product.service.impl.CategoryServiceImpl;
+import com.pdd.product.entity.Category;
+import com.pdd.product.repository.CategoryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,10 +16,10 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CategoryServiceTest {
 
     @Mock
-    private com.pdd.product.mapper.CategoryMapper categoryMapper;
+    private CategoryRepository categoryRepository;
 
     @InjectMocks
-    private CategoryServiceImpl categoryService;
+    private CategoryService categoryService;
 
     @Test
     public void testCreateCategory() {
@@ -27,13 +28,13 @@ public class CategoryServiceTest {
         categoryDTO.setParentId(0L);
         categoryDTO.setLevel(1);
 
-        com.pdd.product.entity.Category category = new com.pdd.product.entity.Category();
+        Category category = new Category();
         category.setId(1L);
         category.setName("测试分类");
         category.setParentId(0L);
         category.setLevel(1);
 
-        when(categoryMapper.insert(any())).thenReturn(1);
+        when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
         CategoryDTO result = categoryService.createCategory(categoryDTO);
         assertNotNull(result);

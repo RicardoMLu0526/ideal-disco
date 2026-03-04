@@ -2,24 +2,27 @@ package com.pdd.product.controller;
 
 import com.pdd.product.service.SearchService;
 import com.pdd.product.vo.Result;
-import com.pdd.product.vo.SearchResultVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/search")
+@RequestMapping("/api/products/search")
 public class SearchController {
 
     @Autowired
     private SearchService searchService;
 
     @GetMapping
-    public Result<SearchResultVO> search(@RequestParam String keyword, @RequestParam Integer page, @RequestParam Integer size) {
-        SearchResultVO result = searchService.search(keyword, page, size);
+    public Result<SearchService.SearchResult> search(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        SearchService.SearchResult result = searchService.search(keyword, page, size);
         return Result.success(result);
     }
 
@@ -31,7 +34,7 @@ public class SearchController {
 
     @GetMapping("/hot")
     public Result<List<String>> getHotSearch() {
-        List<String> hotSearch = searchService.getHotSearch();
-        return Result.success(hotSearch);
+        List<String> hotKeywords = searchService.getHotSearch();
+        return Result.success(hotKeywords);
     }
 }

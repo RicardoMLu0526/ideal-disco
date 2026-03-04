@@ -23,6 +23,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordUtil passwordUtil;
+
     @Override
     public UserDTO getUserById(Long id) {
         Optional<User> userOptional = userRepository.findById(id);
@@ -72,7 +75,7 @@ public class UserServiceImpl implements UserService {
 
         User user = new User();
         user.setUsername(userDTO.getUsername());
-        user.setPassword(PasswordUtil.encode(userDTO.getPassword()));
+        user.setPassword(passwordUtil.encode(userDTO.getPassword()));
         user.setPhone(userDTO.getPhone());
         user.setEmail(userDTO.getEmail());
         user.setNickname(userDTO.getNickname());
@@ -108,7 +111,7 @@ public class UserServiceImpl implements UserService {
 
         user.setUsername(userDTO.getUsername());
         if (userDTO.getPassword() != null) {
-            user.setPassword(PasswordUtil.encode(userDTO.getPassword()));
+            user.setPassword(passwordUtil.encode(userDTO.getPassword()));
         }
         user.setPhone(userDTO.getPhone());
         user.setEmail(userDTO.getEmail());

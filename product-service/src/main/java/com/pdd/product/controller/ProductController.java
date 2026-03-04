@@ -2,13 +2,16 @@ package com.pdd.product.controller;
 
 import com.pdd.product.dto.ProductDTO;
 import com.pdd.product.dto.ProductQueryDTO;
-import com.pdd.product.service.ProductService;
 import com.pdd.product.vo.ProductVO;
 import com.pdd.product.vo.Result;
+import com.pdd.product.service.ProductService;
+import com.pdd.product.service.InventoryService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/products")
@@ -17,28 +20,48 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private InventoryService inventoryService;
+
     @PostMapping
-    public Result<ProductDTO> createProduct(@RequestBody ProductDTO productDTO) {
-        ProductDTO result = productService.createProduct(productDTO);
-        return Result.success(result);
+    public Result<ProductVO> createProduct(@RequestBody ProductDTO productDTO) {
+        ProductDTO created = productService.createProduct(productDTO);
+        ProductVO vo = new ProductVO();
+        BeanUtils.copyProperties(created, vo);
+        return Result.success(vo);
     }
 
     @GetMapping
-    public Result<List<ProductDTO>> getProductList(ProductQueryDTO queryDTO) {
-        List<ProductDTO> products = productService.getProductList(queryDTO);
-        return Result.success(products);
+    public Result<List<ProductVO>> getProductList(ProductQueryDTO queryDTO) {
+        List<ProductDTO> dtos = productService.getProductList(queryDTO);
+        List<ProductVO> vos = dtos.stream()
+                .map(dto -> {
+                    ProductVO vo = new ProductVO();
+                    BeanUtils.copyProperties(dto, vo);
+                    return vo;
+                })
+                .collect(Collectors.toList());
+        return Result.success(vos);
     }
 
     @GetMapping("/{id}")
     public Result<ProductVO> getProductById(@PathVariable Long id) {
-        ProductVO product = productService.getProductById(id);
-        return Result.success(product);
+        ProductVO vo = productService.getProductDetail(id);
+        if (vo == null) {
+            return Result.error(404, "商品不存在");
+        }
+        return Result.success(vo);
     }
 
     @PutMapping("/{id}")
-    public Result<ProductDTO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
-        ProductDTO result = productService.updateProduct(id, productDTO);
-        return Result.success(result);
+    public Result<ProductVO> updateProduct(@PathVariable Long id, @RequestBody ProductDTO productDTO) {
+        ProductDTO updated = productService.updateProduct(id, productDTO);
+        if (updated == null) {
+            return Result.error(404, "商品不存在");
+        }
+        ProductVO vo = new ProductVO();
+        BeanUtils.copyProperties(updated, vo);
+        return Result.success(vo);
     }
 
     @DeleteMapping("/{id}")
@@ -48,25 +71,39 @@ public class ProductController {
     }
 
     @PutMapping("/{id}/status")
-    public Result<Void> updateProductStatus(@PathVariable Long id, @RequestBody StatusRequest statusRequest) {
-        productService.updateProductStatus(id, statusRequest.getStatus());
+    public Result<Void> updateProductStatus(@PathVariable Long id, @RequestBody StatusRequest request) {
+        productService.updateProductStatus(id, request.getStatus());
         return Result.success();
     }
 
     @GetMapping("/{id}/stock")
-    public Result<StockResponse> getProductStock(@PathVariable Long id) {
-        Integer stock = productService.getProductStock(id);
-        StockResponse response = new StockResponse();
-        response.setStock(stock);
-        return Result.success(response);
+    public Result<Integer> getProductStock(@PathVariable Long id) {
+        Integer stock = inventoryService.getStock(id);
+        return Result.success(stock);
     }
 
-    @PostMapping("/{id}/images")
-    public Result<String> uploadProductImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-        // 这里可以实现图片上传逻辑
-        return Result.success("图片上传成功");
+    // 库存扣减请求
+    @PostMapping("/stock/deduct")
+    public Result<Void> deductStock(@RequestBody StockDeductRequest request) {
+        inventoryService.deductStock(request.getProductId(), request.getQuantity());
+        return Result.success();
     }
 
+    // 预扣库存请求
+    @PostMapping("/stock/pre-deduct")
+    public Result<Void> preDeductStock(@RequestBody StockDeductRequest request) {
+        inventoryService.preDeductStock(request.getProductId(), request.getQuantity(), request.getOrderNo());
+        return Result.success();
+    }
+
+    // 释放库存请求
+    @PostMapping("/stock/release")
+    public Result<Void> releaseStock(@RequestBody StockReleaseRequest request) {
+        inventoryService.releaseStock(request.getProductId(), request.getQuantity(), request.getOrderNo());
+        return Result.success();
+    }
+
+    // 内部类：状态更新请求
     static class StatusRequest {
         private Integer status;
 
@@ -79,15 +116,65 @@ public class ProductController {
         }
     }
 
-    static class StockResponse {
-        private Integer stock;
+    // 内部类：库存扣减请求
+    static class StockDeductRequest {
+        private Long productId;
+        private Integer quantity;
+        private String orderNo;
 
-        public Integer getStock() {
-            return stock;
+        public Long getProductId() {
+            return productId;
         }
 
-        public void setStock(Integer stock) {
-            this.stock = stock;
+        public void setProductId(Long productId) {
+            this.productId = productId;
+        }
+
+        public Integer getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(Integer quantity) {
+            this.quantity = quantity;
+        }
+
+        public String getOrderNo() {
+            return orderNo;
+        }
+
+        public void setOrderNo(String orderNo) {
+            this.orderNo = orderNo;
+        }
+    }
+
+    // 内部类：库存释放请求
+    static class StockReleaseRequest {
+        private Long productId;
+        private Integer quantity;
+        private String orderNo;
+
+        public Long getProductId() {
+            return productId;
+        }
+
+        public void setProductId(Long productId) {
+            this.productId = productId;
+        }
+
+        public Integer getQuantity() {
+            return quantity;
+        }
+
+        public void setQuantity(Integer quantity) {
+            this.quantity = quantity;
+        }
+
+        public String getOrderNo() {
+            return orderNo;
+        }
+
+        public void setOrderNo(String orderNo) {
+            this.orderNo = orderNo;
         }
     }
 }

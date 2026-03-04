@@ -2,7 +2,9 @@ package com.pdd.product.service;
 
 import com.pdd.product.dto.ProductDTO;
 import com.pdd.product.dto.ProductQueryDTO;
-import com.pdd.product.service.impl.ProductServiceImpl;
+import com.pdd.product.entity.Product;
+import com.pdd.product.repository.ProductRepository;
+import com.pdd.product.repository.ProductSkuRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,16 +18,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ProductServiceTest {
 
     @Mock
-    private com.pdd.product.mapper.ProductMapper productMapper;
+    private ProductRepository productRepository;
 
     @Mock
-    private com.pdd.product.mapper.ProductSkuMapper productSkuMapper;
-
-    @Mock
-    private org.elasticsearch.client.RestHighLevelClient esClient;
+    private ProductSkuRepository productSkuRepository;
 
     @InjectMocks
-    private ProductServiceImpl productService;
+    private ProductService productService;
 
     @Test
     public void testCreateProduct() {
@@ -34,13 +33,13 @@ public class ProductServiceTest {
         productDTO.setPrice(java.math.BigDecimal.valueOf(99.99));
         productDTO.setStock(100);
 
-        com.pdd.product.entity.Product product = new com.pdd.product.entity.Product();
+        Product product = new Product();
         product.setId(1L);
         product.setName("测试商品");
         product.setPrice(java.math.BigDecimal.valueOf(99.99));
         product.setStock(100);
 
-        when(productMapper.insert(any())).thenReturn(1);
+        when(productRepository.save(any(Product.class))).thenReturn(product);
 
         ProductDTO result = productService.createProduct(productDTO);
         assertNotNull(result);

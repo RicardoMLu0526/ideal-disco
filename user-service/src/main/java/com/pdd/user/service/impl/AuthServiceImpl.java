@@ -35,6 +35,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private PasswordUtil passwordUtil;
+
     @Value("${jwt.secret}")
     private String secret;
 
@@ -57,7 +60,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = userOptional.get();
-        if (!PasswordUtil.matches(loginDTO.getPassword(), user.getPassword())) {
+        if (!passwordUtil.matches(loginDTO.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("用户名或密码错误");
         }
 
@@ -66,7 +69,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         // 生成JWT token
-        String token = jwtUtil.generateToken(user.getUsername());
+        UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
+                .username(user.getUsername())
+                .password(user.getPassword())
+                .roles("USER")
+                .build();
+        String token = jwtUtil.generateToken(userDetails);
 
         // 构建返回结果
         Map<String, Object> result = new HashMap<>();
@@ -98,30 +106,33 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String refreshToken(String refreshToken) {
-        // 验证refreshToken
-        if (!jwtUtil.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("无效的refresh token");
-        }
-
         // 从refreshToken中获取用户名
         String username = jwtUtil.extractUsername(refreshToken);
         
         // 生成新的token
-        return jwtUtil.generateToken(username);
+        UserDetails userDetails = userDetailsService().loadUserByUsername(username);
+        return jwtUtil.generateToken(userDetails);
     }
 
     @Override
     public boolean validateToken(String token) {
-        return jwtUtil.validateToken(token);
+        try {
+            String username = jwtUtil.extractUsername(token);
+            UserDetails userDetails = userDetailsService().loadUserByUsername(username);
+            return jwtUtil.validateToken(token, userDetails);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
     public UserDTO getUserFromToken(String token) {
-        if (!jwtUtil.validateToken(token)) {
+        String username = jwtUtil.extractUsername(token);
+        UserDetails userDetails = userDetailsService().loadUserByUsername(username);
+        if (!jwtUtil.validateToken(token, userDetails)) {
             throw new IllegalArgumentException("无效的token");
         }
 
-        String username = jwtUtil.extractUsername(token);
         return userService.getUserByUsername(username);
     }
 

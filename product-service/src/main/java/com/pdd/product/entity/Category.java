@@ -1,23 +1,26 @@
 package com.pdd.product.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("category")
+@Entity
+@Table(name = "category")
 public class Category {
-
-    @TableId(type = IdType.AUTO)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     private String name;
     private Long parentId;
     private Integer level;
     private Integer sort;
-    private String icon;
     private Integer status;
+    
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

@@ -37,7 +37,7 @@ public class ProductServiceIntegrationTest {
         assertNotNull(createdProduct);
 
         // 3. 获取产品详情
-        com.pdd.product.vo.ProductVO productVO = productService.getProductById(createdProduct.getId());
+        com.pdd.product.vo.ProductVO productVO = productService.getProductDetail(createdProduct.getId());
         assertNotNull(productVO);
         assertEquals("测试商品", productVO.getName());
     }

@@ -1,6 +1,6 @@
 package com.pdd.product.service;
 
-import com.pdd.product.service.impl.SearchServiceImpl;
+import com.pdd.product.service.SearchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,13 +15,10 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SearchServiceTest {
 
     @Mock
-    private org.elasticsearch.client.RestHighLevelClient esClient;
-
-    @Mock
     private RedisTemplate<String, Object> redisTemplate;
 
     @InjectMocks
-    private SearchServiceImpl searchService;
+    private SearchService searchService;
 
     @Test
     public void testGetHotSearch() {
